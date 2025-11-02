@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 
-const VENMO_HANDLE = "@YourBiz"; // ← change me
-const VENMO_QR_URL = "https://placehold.co/400x400?text=Venmo+QR"; // ← change me
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-id"; // ← change me
+const VENMO_HANDLE = "@allheartbasketballcoach"; // ← change me
+const VENMO_QR_URL = "https://venmo.com/code?user_id=2633059203547136545&created=1762099984"; // ← change me
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // ← change me
 
 const DESIGNS = [
   { id: "designA", name: "Design A" },
