@@ -1,15 +1,20 @@
 import React, { useMemo, useState } from "react";
 
-const VENMO_HANDLE = "@allheartbasketballcoach"; // ← change me
-const VENMO_QR_URL = "https://venmo.com/code?user_id=2633059203547136545&created=1762099984"; // ← change me
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // ← change me
+// 🔁 UPDATE THESE 3 FOR YOUR SETUP
+const VENMO_HANDLE = "@YourBiz"; // <- your Venmo business handle
+const VENMO_QR_URL = "https://placehold.co/400x400?text=Venmo+QR"; // <- your QR image
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-id"; // <- your real Formspree URL
 
+// 👕 your 5 designs from GitHub /public
 const DESIGNS = [
-  { id: "designA", name: "Design A" },
-  { id: "designB", name: "Design B" },
-  { id: "designC", name: "Design C" },
+  { id: "colonelA", name: "Colonel A", image: "/ColonelA.png" },
+  { id: "colonelBblack", name: "Colonel B – Black", image: "/ColonelB-Black.png" },
+  { id: "colonelBblue", name: "Colonel B – Blue", image: "/ColonelB-Blue.png" },
+  { id: "colonelCblack", name: "Colonel C – Black", image: "/ColonelC-Black.png" },
+  { id: "colonelCblue", name: "Colonel C – Blue", image: "/ColonelC-Blue.png" },
 ];
 
+// you can still keep generic shirt colors if you want
 const COLORS = [
   { id: "black", name: "Black" },
   { id: "white", name: "White" },
@@ -18,6 +23,7 @@ const COLORS = [
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
+// pricing: $25 or 2 for $45
 function calcUnitPrice(qty: number) {
   if (qty >= 2) {
     const pairs = Math.floor(qty / 2);
@@ -39,7 +45,7 @@ export default function App() {
     name: "",
     email: "",
     address: "",
-    design: DESIGNS[0].id,
+    design: DESIGNS[0].id, // default = first design
     color: COLORS[0].id,
     size: "M",
     qty: 1,
@@ -47,6 +53,7 @@ export default function App() {
     agreed: false,
   });
 
+  // unique-ish order id
   const orderId = useMemo(() => {
     const t = new Date();
     return `ORD-${t.getFullYear()}${String(t.getMonth() + 1).padStart(
@@ -64,7 +71,7 @@ export default function App() {
     [form.qty]
   );
   const shipping = 5;
-  const taxRate = 0;
+  const taxRate = 0; // set your tax rate if needed
   const tax = useMemo(
     () => Number((subtotal * taxRate).toFixed(2)),
     [subtotal, taxRate]
@@ -82,6 +89,20 @@ export default function App() {
     }));
   };
 
+  // when user clicks a design card
+  const onSelectDesign = (designId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      design: designId,
+      // optional: auto-pick color based on file name
+      color: designId.toLowerCase().includes("black")
+        ? "black"
+        : designId.toLowerCase().includes("blue")
+        ? "white" // or "heather" — up to you
+        : prev.color,
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <header className="mx-auto max-w-5xl px-4 py-8">
@@ -89,18 +110,22 @@ export default function App() {
           Rich&apos;s Pop-Up Tee Shop
         </h1>
         <p className="text-sm mt-1 opacity-80">
-          Limited colors. Three designs. Fast turnaround. $25 each or 2 for $45.
+          Limited run. $25 each or 2 for $45. Pick your Colonel design below.
         </p>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 grid lg:grid-cols-2 gap-8 pb-20">
+        {/* LEFT: order form */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
           <form action={FORMSPREE_ENDPOINT} method="POST" className="space-y-4">
+            {/* hidden fields */}
             <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="total" value={total} />
+            <input type="hidden" name="selectedDesign" value={form.design} />
 
+            {/* name + email */}
             <div className="grid grid-cols-2 gap-4">
               <label className="text-sm">
                 Full Name
@@ -127,6 +152,7 @@ export default function App() {
               </label>
             </div>
 
+            {/* shipping address */}
             <label className="text-sm block">
               Shipping Address
               <textarea
@@ -139,23 +165,38 @@ export default function App() {
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-4">
-              <label className="text-sm">
-                Design
-                <select
-                  name="design"
-                  value={form.design}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-3 py-2"
+            {/* design gallery */}
+            <label className="text-sm block mb-2">Choose a Design</label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
+              {DESIGNS.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => onSelectDesign(d.id)}
+                  className={`cursor-pointer rounded-xl border-2 p-2 text-center hover:border-zinc-700 transition ${
+                    form.design === d.id
+                      ? "border-zinc-900 shadow-sm"
+                      : "border-zinc-300"
+                  }`}
                 >
-                  {DESIGNS.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <img
+                    src={d.image}
+                    alt={d.name}
+                    className="rounded-lg mb-1 w-full object-contain"
+                  />
+                  <p className="text-xs font-medium">{d.name}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500">
+              Selected:{" "}
+              {
+                DESIGNS.find((d) => d.id === form.design)?.name
+              }
+            </p>
 
+            {/* color + size + qty */}
+            <div className="grid grid-cols-3 gap-4">
               <label className="text-sm">
                 Color
                 <select
@@ -171,9 +212,7 @@ export default function App() {
                   ))}
                 </select>
               </label>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <label className="text-sm">
                 Size
                 <select
@@ -203,6 +242,7 @@ export default function App() {
               </label>
             </div>
 
+            {/* notes */}
             <label className="text-sm block">
               Notes (optional)
               <textarea
@@ -214,6 +254,7 @@ export default function App() {
               />
             </label>
 
+            {/* totals */}
             <div className="rounded-xl border bg-zinc-50 p-4 text-sm">
               <div className="flex items-center justify-between">
                 <span>Unit price</span>
@@ -240,6 +281,7 @@ export default function App() {
               </p>
             </div>
 
+            {/* agree + submit */}
             <label className="flex items-start gap-3 text-sm">
               <input
                 type="checkbox"
@@ -249,7 +291,7 @@ export default function App() {
                 required
               />
               <span>
-                I’ll send payment on Venmo and include my Order ID in the note.
+                I will pay on Venmo and include my Order ID in the note.
               </span>
             </label>
 
@@ -262,6 +304,7 @@ export default function App() {
           </form>
         </section>
 
+        {/* RIGHT: Venmo instructions */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-2">2) Pay on Venmo</h2>
           <p className="text-sm mb-4">
@@ -274,7 +317,11 @@ export default function App() {
 
           <div className="grid md:grid-cols-2 gap-4 items-start">
             <div className="rounded-2xl border p-3 flex flex-col items-center">
-              <img src={VENMO_QR_URL} alt="Venmo QR" className="rounded-xl w-full" />
+              <img
+                src={VENMO_QR_URL}
+                alt="Venmo QR"
+                className="rounded-xl w-full"
+              />
               <a
                 href={`https://venmo.com/${VENMO_HANDLE.replace("@", "")}`}
                 target="_blank"
@@ -297,9 +344,9 @@ export default function App() {
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Pro tips</p>
                 <ul className="list-disc ml-5 mt-1">
-                  <li>Ask buyers to paste the Order ID in the Venmo note</li>
-                  <li>Set up preset QR amounts for $25 and $45</li>
-                  <li>Use Pirate Ship to buy cheap USPS labels</li>
+                  <li>Tell buyers to paste the Order ID in the note</li>
+                  <li>Set up preset QR amounts in Venmo</li>
+                  <li>Use Pirate Ship for labels</li>
                 </ul>
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
@@ -320,7 +367,10 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-xs opacity-70">
-        <p>© {new Date().getFullYear()} Rich’s Pop-Up Tee Shop • All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} Rich’s Pop-Up Tee Shop • All rights
+          reserved.
+        </p>
       </footer>
     </div>
   );
