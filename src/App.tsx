@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
 
-// 🔧 UPDATE THESE WITH YOUR INFO
-const VENMO_HANDLE = "@allheartbasketballcoach"; // <- your Venmo
-const VENMO_QR_URL = "/venmoQR.jpg"; // <- put your QR in /public as venmoQR.png
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree endpoint
+// 🔧 YOUR SETTINGS
+const VENMO_HANDLE = "@allheartbasketballcoach"; // <-- change to your Venmo
+const VENMO_QR_URL = "/venmoQR.jpeg"; // <-- drop QR in /public
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <-- your real Formspree URL
 
-// 👕 your 5 designs
+// your 5 designs
 const DESIGNS = [
   { id: "colonelA", name: "Colonel A", image: "/ColonelA.png" },
   { id: "colonelBblack", name: "Colonel B – Black", image: "/ColonelB-Black.png" },
@@ -14,72 +14,52 @@ const DESIGNS = [
   { id: "colonelCblue", name: "Colonel C – Blue", image: "/ColonelC-Blue.png" },
 ];
 
-// ⚙️ size options
+const COLORS = ["White", "Black", "Heather Gray", "Royal Blue"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
-// pricing helpers: $25 each or 2 for $45
-function calcUnitPrice(qty: number) {
-  if (qty >= 2) {
-    const pairs = Math.floor(qty / 2);
-    const remainder = qty % 2;
-    const total = pairs * 45 + remainder * 25;
-    return total / qty;
-  }
-  return 25;
-}
-
+// pricing: $25 each, 2 for $45
 function calcSubtotal(qty: number) {
   const pairs = Math.floor(qty / 2);
   const remainder = qty % 2;
   return pairs * 45 + remainder * 25;
 }
+function calcUnitPrice(qty: number) {
+  if (qty <= 0) return 25;
+  return calcSubtotal(qty) / qty;
+}
 
 export default function App() {
+  // base form
   const [form, setForm] = useState({
-    // buyer info
     name: "",
     email: "",
     address: "",
-
-    // just for showing which card is selected
-    design: DESIGNS[0].id,
-
-    // line 1 – Colonel A
-    colonelA_color: "White",
-    colonelA_size: "M",
-    colonelA_qty: 0,
-    colonelA_notes: "",
-
-    // line 2 – Colonel B Black
-    colonelBblack_color: "Black",
-    colonelBblack_size: "M",
-    colonelBblack_qty: 0,
-    colonelBblack_notes: "",
-
-    // line 3 – Colonel B Blue
-    colonelBblue_color: "Royal Blue",
-    colonelBblue_size: "M",
-    colonelBblue_qty: 0,
-    colonelBblue_notes: "",
-
-    // line 4 – Colonel C Black
-    colonelCblack_color: "Black",
-    colonelCblack_size: "M",
-    colonelCblack_qty: 0,
-    colonelCblack_notes: "",
-
-    // line 5 – Colonel C Blue
-    colonelCblue_color: "Royal Blue",
-    colonelCblue_size: "M",
-    colonelCblue_qty: 0,
-    colonelCblue_notes: "",
-
-    // extra
     notes: "",
     agreed: false,
   });
 
-  // order id for buyer to paste in Venmo
+  // dynamic line items
+  const [lineItems, setLineItems] = useState<
+    Array<{
+      id: number;
+      design: string;
+      color: string;
+      size: string;
+      qty: number;
+      notes: string;
+    }>
+  >([
+    {
+      id: 1,
+      design: "colonelA",
+      color: "White",
+      size: "M",
+      qty: 1,
+      notes: "",
+    },
+  ]);
+
+  // order id
   const orderId = useMemo(() => {
     const t = new Date();
     return `ORD-${t.getFullYear()}${String(t.getMonth() + 1).padStart(
@@ -88,28 +68,19 @@ export default function App() {
     )}${String(t.getDate()).padStart(2, "0")}-${t.getHours()}${t.getMinutes()}${t.getSeconds()}`;
   }, []);
 
-  // total shirts = sum of 5 rows
-  const totalQty =
-    (Number(form.colonelA_qty) || 0) +
-    (Number(form.colonelBblack_qty) || 0) +
-    (Number(form.colonelBblue_qty) || 0) +
-    (Number(form.colonelCblack_qty) || 0) +
-    (Number(form.colonelCblue_qty) || 0);
-
+  // totals
+  const totalQty = lineItems.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
   const safeTotalQty = totalQty > 0 ? totalQty : 1;
-
-  const subtotal = useMemo(() => calcSubtotal(safeTotalQty), [safeTotalQty]);
-  const unit = useMemo(() => calcUnitPrice(safeTotalQty), [safeTotalQty]);
+  const subtotal = calcSubtotal(safeTotalQty);
+  const unit = calcUnitPrice(safeTotalQty);
   const shipping = 5;
   const taxRate = 0;
-  const tax = useMemo(() => Number((subtotal * taxRate).toFixed(2)), [subtotal, taxRate]);
-  const total = useMemo(
-    () => Number((subtotal + shipping + tax).toFixed(2)),
-    [subtotal, shipping, tax]
-  );
+  const tax = Number((subtotal * taxRate).toFixed(2));
+  const total = Number((subtotal + shipping + tax).toFixed(2));
 
-  const onChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  // handlers
+  const onFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -118,38 +89,69 @@ export default function App() {
     }));
   };
 
-  const onSelectDesign = (designId: string) => {
-    setForm((prev) => ({
-      ...prev,
-      design: designId,
-    }));
+  const onLineChange = (
+    id: number,
+    field: keyof (typeof lineItems)[number],
+    value: string | number
+  ) => {
+    setLineItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]:
+                field === "qty" ? Number(value) : value,
+            }
+          : item
+      )
+    );
   };
+
+  const addLine = () => {
+    setLineItems((prev) => [
+      ...prev,
+      {
+        id: prev.length ? prev[prev.length - 1].id + 1 : 1,
+        design: "colonelA",
+        color: "White",
+        size: "M",
+        qty: 1,
+        notes: "",
+      },
+    ]);
+  };
+
+  const removeLine = (id: number) => {
+    setLineItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // this goes to Formspree so you see all shirts
+  const orderLinesJSON = JSON.stringify(lineItems);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      {/* HEADER */}
       <header className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-3xl font-extrabold tracking-tight">
           Cov Cath Colonel “#TAKEITBACK” T-Shirt Shop
         </h1>
         <p className="text-sm mt-1 opacity-80">
-          Order your 2026 Colonel gear here. $25 each or 2 for $45. Choose your design below.
+          $25 each or 2 for $45. Pick a design, color, size, and add as many rows as you need.
         </p>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 grid lg:grid-cols-2 gap-8 pb-20">
-        {/* LEFT: ORDER FORM */}
+        {/* LEFT */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
           <form action={FORMSPREE_ENDPOINT} method="POST" className="space-y-4">
-            {/* hidden values so you see them in Formspree */}
+            {/* hidden stuff */}
             <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="total" value={total} />
             <input type="hidden" name="totalQty" value={totalQty} />
-            <input type="hidden" name="selectedDesign" value={form.design} />
+            <input type="hidden" name="orderLinesJSON" value={orderLinesJSON} />
 
-            {/* buyer info */}
+            {/* contact */}
             <div className="grid grid-cols-2 gap-4">
               <label className="text-sm">
                 Full Name
@@ -157,7 +159,7 @@ export default function App() {
                   required
                   name="name"
                   value={form.name}
-                  onChange={onChange}
+                  onChange={onFormChange}
                   className="mt-1 w-full rounded-xl border px-3 py-2"
                   placeholder="Jane Doe"
                 />
@@ -169,7 +171,7 @@ export default function App() {
                   type="email"
                   name="email"
                   value={form.email}
-                  onChange={onChange}
+                  onChange={onFormChange}
                   className="mt-1 w-full rounded-xl border px-3 py-2"
                   placeholder="you@example.com"
                 />
@@ -182,316 +184,131 @@ export default function App() {
                 required
                 name="address"
                 value={form.address}
-                onChange={onChange}
+                onChange={onFormChange}
                 className="mt-1 w-full rounded-xl border px-3 py-2"
                 placeholder="Street, City, State, ZIP"
               />
             </label>
 
-            {/* design cards */}
-            <label className="text-sm block mb-2">Choose a Design</label>
+            {/* design cards – just for preview, not required */}
+            <label className="text-sm block mb-2">Designs available</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
               {DESIGNS.map((d) => (
-                <button
+                <div
                   key={d.id}
-                  type="button"
-                  onClick={() => onSelectDesign(d.id)}
-                  className={`cursor-pointer rounded-xl border-2 p-2 text-center hover:border-zinc-700 transition ${
-                    form.design === d.id ? "border-zinc-900 shadow-sm" : "border-zinc-300"
-                  }`}
+                  className="rounded-xl border p-2 text-center bg-zinc-50"
                 >
-                  <img src={d.image} alt={d.name} className="rounded-lg mb-1 w-full object-contain" />
+                  <img
+                    src={d.image}
+                    alt={d.name}
+                    className="rounded-lg mb-1 w-full object-contain"
+                  />
                   <p className="text-xs font-medium">{d.name}</p>
-                </button>
+                </div>
               ))}
             </div>
-            <p className="text-xs text-zinc-500 mb-2">
-              Selected: {DESIGNS.find((d) => d.id === form.design)?.name}
-            </p>
 
-            {/* ORDER BY DESIGN – each line has Color + Size + Qty + Notes */}
-            <p className="text-sm mt-4 mb-2 font-semibold">Order by design</p>
+            {/* DYNAMIC ROWS */}
+            <p className="text-sm mt-4 mb-2 font-semibold">Shirts in this order</p>
 
-            {/* 1) Colonel A */}
-            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
-              <div className="text-xs">
-                <p className="font-semibold">Colonel A</p>
+            {lineItems.map((item, idx) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-5 gap-3 mb-2 items-end border-b pb-2"
+              >
+                <label className="text-xs">
+                  Design
+                  <select
+                    value={item.design}
+                    onChange={(e) =>
+                      onLineChange(item.id, "design", e.target.value)
+                    }
+                    className="mt-1 w-full rounded-xl border px-2 py-1"
+                  >
+                    {DESIGNS.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-xs">
+                  Color
+                  <select
+                    value={item.color}
+                    onChange={(e) =>
+                      onLineChange(item.id, "color", e.target.value)
+                    }
+                    className="mt-1 w-full rounded-xl border px-2 py-1"
+                  >
+                    {COLORS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-xs">
+                  Size
+                  <select
+                    value={item.size}
+                    onChange={(e) =>
+                      onLineChange(item.id, "size", e.target.value)
+                    }
+                    className="mt-1 w-full rounded-xl border px-2 py-1"
+                  >
+                    {SIZES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-xs">
+                  Qty
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.qty}
+                    onChange={(e) =>
+                      onLineChange(item.id, "qty", Number(e.target.value))
+                    }
+                    className="mt-1 w-full rounded-xl border px-2 py-1"
+                  />
+                </label>
+
+                <div className="flex gap-2 items-center">
+                  <input
+                    value={item.notes}
+                    onChange={(e) =>
+                      onLineChange(item.id, "notes", e.target.value)
+                    }
+                    className="mt-1 w-full rounded-xl border px-2 py-1 text-xs"
+                    placeholder="notes"
+                  />
+                  {lineItems.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => removeLine(item.id)}
+                      className="text-[10px] text-red-500"
+                    >
+                      X
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <label className="text-xs">
-                Color
-                <select
-                  name="colonelA_color"
-                  value={form.colonelA_color}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  <option>White</option>
-                  <option>Black</option>
-                  <option>Heather Gray</option>
-                  <option>Royal Blue</option>
-                </select>
-              </label>
-              <label className="text-xs">
-                Size
-                <select
-                  name="colonelA_size"
-                  value={form.colonelA_size}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs">
-                Qty
-                <input
-                  type="number"
-                  min={0}
-                  name="colonelA_qty"
-                  value={form.colonelA_qty}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-              <label className="text-xs">
-                Notes
-                <input
-                  name="colonelA_notes"
-                  value={form.colonelA_notes}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                  placeholder="name/#, pickup"
-                />
-              </label>
-            </div>
+            ))}
 
-            {/* 2) Colonel B – Black */}
-            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
-              <div className="text-xs">
-                <p className="font-semibold">Colonel B – Black</p>
-              </div>
-              <label className="text-xs">
-                Color
-                <select
-                  name="colonelBblack_color"
-                  value={form.colonelBblack_color}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  <option>Black</option>
-                  <option>White</option>
-                  <option>Heather Gray</option>
-                  <option>Royal Blue</option>
-                </select>
-              </label>
-              <label className="text-xs">
-                Size
-                <select
-                  name="colonelBblack_size"
-                  value={form.colonelBblack_size}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs">
-                Qty
-                <input
-                  type="number"
-                  min={0}
-                  name="colonelBblack_qty"
-                  value={form.colonelBblack_qty}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-              <label className="text-xs">
-                Notes
-                <input
-                  name="colonelBblack_notes"
-                  value={form.colonelBblack_notes}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-            </div>
-
-            {/* 3) Colonel B – Blue */}
-            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
-              <div className="text-xs">
-                <p className="font-semibold">Colonel B – Blue</p>
-              </div>
-              <label className="text-xs">
-                Color
-                <select
-                  name="colonelBblue_color"
-                  value={form.colonelBblue_color}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  <option>Royal Blue</option>
-                  <option>White</option>
-                  <option>Black</option>
-                  <option>Heather Gray</option>
-                </select>
-              </label>
-              <label className="text-xs">
-                Size
-                <select
-                  name="colonelBblue_size"
-                  value={form.colonelBblue_size}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs">
-                Qty
-                <input
-                  type="number"
-                  min={0}
-                  name="colonelBblue_qty"
-                  value={form.colonelBblue_qty}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-              <label className="text-xs">
-                Notes
-                <input
-                  name="colonelBblue_notes"
-                  value={form.colonelBblue_notes}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-            </div>
-
-            {/* 4) Colonel C – Black */}
-            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
-              <div className="text-xs">
-                <p className="font-semibold">Colonel C – Black</p>
-              </div>
-              <label className="text-xs">
-                Color
-                <select
-                  name="colonelCblack_color"
-                  value={form.colonelCblack_color}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  <option>Black</option>
-                  <option>White</option>
-                  <option>Heather Gray</option>
-                  <option>Royal Blue</option>
-                </select>
-              </label>
-              <label className="text-xs">
-                Size
-                <select
-                  name="colonelCblack_size"
-                  value={form.colonelCblack_size}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs">
-                Qty
-                <input
-                  type="number"
-                  min={0}
-                  name="colonelCblack_qty"
-                  value={form.colonelCblack_qty}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-              <label className="text-xs">
-                Notes
-                <input
-                  name="colonelCblack_notes"
-                  value={form.colonelCblack_notes}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-            </div>
-
-            {/* 5) Colonel C – Blue */}
-            <div className="grid grid-cols-5 gap-4 mb-4 items-end">
-              <div className="text-xs">
-                <p className="font-semibold">Colonel C – Blue</p>
-              </div>
-              <label className="text-xs">
-                Color
-                <select
-                  name="colonelCblue_color"
-                  value={form.colonelCblue_color}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  <option>Royal Blue</option>
-                  <option>White</option>
-                  <option>Black</option>
-                  <option>Heather Gray</option>
-                </select>
-              </label>
-              <label className="text-xs">
-                Size
-                <select
-                  name="colonelCblue_size"
-                  value={form.colonelCblue_size}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                >
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs">
-                Qty
-                <input
-                  type="number"
-                  min={0}
-                  name="colonelCblue_qty"
-                  value={form.colonelCblue_qty}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-              <label className="text-xs">
-                Notes
-                <input
-                  name="colonelCblue_notes"
-                  value={form.colonelCblue_notes}
-                  onChange={onChange}
-                  className="mt-1 w-full rounded-xl border px-2 py-1"
-                />
-              </label>
-            </div>
+            <button
+              type="button"
+              onClick={addLine}
+              className="text-sm rounded-lg border px-3 py-1 bg-zinc-50 hover:bg-zinc-100"
+            >
+              + Add another shirt
+            </button>
 
             {/* extra notes */}
             <label className="text-sm block">
@@ -499,17 +316,17 @@ export default function App() {
               <textarea
                 name="notes"
                 value={form.notes}
-                onChange={onChange}
+                onChange={onFormChange}
                 className="mt-1 w-full rounded-xl border px-3 py-2"
                 placeholder="Anything special?"
               />
             </label>
 
-            {/* TOTALS */}
+            {/* totals */}
             <div className="rounded-xl border bg-zinc-50 p-4 text-sm">
               <div className="flex items-center justify-between">
                 <span>Total shirts</span>
-                <span className="font-semibold">{totalQty || 0}</span>
+                <span className="font-semibold">{totalQty}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Unit price</span>
@@ -532,32 +349,32 @@ export default function App() {
                 <span className="text-lg font-bold">${total.toFixed(2)}</span>
               </div>
               <p className="mt-2 text-xs opacity-70">
-                Discount auto-applies: $25 each or 2 for $45.
+                Discount auto-calculated: $25 each or 2 for $45.
               </p>
             </div>
 
-            {/* SUBMIT */}
+            {/* agree + submit */}
             <label className="flex items-start gap-3 text-sm">
               <input
+                required
                 type="checkbox"
                 name="agreed"
                 checked={form.agreed}
-                onChange={onChange}
-                required
+                onChange={onFormChange}
               />
               <span>I will pay on Venmo and include my Order ID in the note.</span>
             </label>
 
             <button
-              className="w-full rounded-xl bg-zinc-900 text-white font-semibold py-3 hover:opacity-90"
               type="submit"
+              className="w-full rounded-xl bg-zinc-900 text-white font-semibold py-3 hover:opacity-90"
             >
               1) Submit Order
             </button>
           </form>
         </section>
 
-        {/* RIGHT: VENMO PANEL */}
+        {/* RIGHT */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-2">2) Pay on Venmo</h2>
           <p className="text-sm mb-4">
@@ -598,7 +415,7 @@ export default function App() {
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Support</p>
-                <p>Email: allheartbasketball247@gmail.com</p>
+                <p>Email: mcgillisrj@gmail.com</p>
               </div>
             </div>
           </div>
