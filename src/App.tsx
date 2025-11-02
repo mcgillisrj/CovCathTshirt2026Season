@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
 
 // 🔧 YOUR SETTINGS
-const VENMO_HANDLE = "@allheartbasketballcoach"; // <- change to your Venmo
-const VENMO_QR_URL = "/venmoQR.jpeg"; // <- put your QR in /public
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree URL
+const VENMO_HANDLE = "@YourBiz"; // <- change to your Venmo
+const VENMO_QR_URL = "/venmoQR.png"; // <- put your QR in /public
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-id"; // <- your real Formspree URL
 
 // your 5 designs
 const DESIGNS = [
@@ -34,7 +34,7 @@ export default function App() {
     name: "",
     email: "",
     address: "",
-    playerInfo: "", // <-- player name + number
+    playerInfo: "",
     notes: "",
     agreed: false,
   });
@@ -59,11 +59,9 @@ export default function App() {
   ]);
 
   // image preview modal
-  const [preview, setPreview] = useState<{
-    open: boolean;
-    image?: string;
-    title?: string;
-  }>({ open: false });
+  const [preview, setPreview] = useState<{ open: boolean; image?: string; title?: string }>({
+    open: false,
+  });
 
   const orderId = useMemo(() => {
     const t = new Date();
@@ -127,7 +125,7 @@ export default function App() {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // send to Formspree
+  // send to Formspree as JSON
   const orderLinesJSON = JSON.stringify(lineItems);
 
   return (
@@ -148,8 +146,14 @@ export default function App() {
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
-          <form action={FORMSPREE_ENDPOINT} method="POST" className="space-y-4">
-            {/* hidden for Formspree */}
+          {/* IMPORTANT: enctype added here so file uploads work */}
+          <form
+            action={FORMSPREE_ENDPOINT}
+            method="POST"
+            encType="multipart/form-data"
+            className="space-y-4"
+          >
+            {/* hidden fields */}
             <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="total" value={total} />
             <input type="hidden" name="totalQty" value={totalQty} />
@@ -211,6 +215,20 @@ export default function App() {
               </p>
             </label>
 
+            {/* signature upload */}
+            <label className="text-sm block">
+              Upload player signature (optional)
+              <input
+                type="file"
+                name="playerSignature"
+                accept="image/*"
+                className="mt-1 w-full text-sm"
+              />
+              <p className="text-xs text-zinc-500 mt-1">
+                You can upload a photo of your son’s signature to print on the shirt (PNG/JPG).
+              </p>
+            </label>
+
             {/* design gallery (click to preview) */}
             <label className="text-sm block mb-2">Designs available (click to preview)</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
@@ -218,13 +236,7 @@ export default function App() {
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() =>
-                    setPreview({
-                      open: true,
-                      image: d.image,
-                      title: d.name,
-                    })
-                  }
+                  onClick={() => setPreview({ open: true, image: d.image, title: d.name })}
                   className="rounded-xl border p-2 text-center bg-zinc-50 hover:border-zinc-700 transition"
                 >
                   <img
@@ -241,7 +253,7 @@ export default function App() {
             {/* DYNAMIC ROWS */}
             <p className="text-sm mt-4 mb-2 font-semibold">Shirts in this order</p>
 
-            {lineItems.map((item, idx) => (
+            {lineItems.map((item) => (
               <div
                 key={item.id}
                 className="grid grid-cols-5 gap-3 mb-2 items-end border-b pb-2"
@@ -297,14 +309,12 @@ export default function App() {
                     type="number"
                     min={0}
                     value={item.qty}
-                    onChange={(e) =>
-                      onLineChange(item.id, "qty", Number(e.target.value))
-                    }
+                    onChange={(e) => onLineChange(item.id, "qty", Number(e.target.value))}
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   />
                 </label>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center">
                   {lineItems.length > 1 ? (
                     <button
                       type="button"
@@ -328,7 +338,7 @@ export default function App() {
               + Add another shirt
             </button>
 
-            {/* extra notes (for you) */}
+            {/* notes */}
             <label className="text-sm block">
               Notes for Rich (optional)
               <textarea
@@ -369,6 +379,9 @@ export default function App() {
               <p className="mt-2 text-xs opacity-70">
                 Discount auto-applies: $25 each or 2 for $45.
               </p>
+              <p className="mt-1 text-[10px] text-zinc-500">
+                Signature image will be sent with this order.
+              </p>
             </div>
 
             {/* agree + submit */}
@@ -380,9 +393,7 @@ export default function App() {
                 onChange={onFormChange}
                 required
               />
-              <span>
-                I will pay on Venmo and include my Order ID in the note.
-              </span>
+              <span>I will pay on Venmo and include my Order ID in the note.</span>
             </label>
 
             <button
@@ -435,7 +446,7 @@ export default function App() {
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Support</p>
-                <p>Email: mcgillisrj@gmail.com</p>
+                <p>Email: you@example.com</p>
               </div>
             </div>
           </div>
