@@ -41,17 +41,40 @@ function calcSubtotal(qty: number) {
 }
 
 export default function App() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    address: "",
-    design: DESIGNS[0].id, // default = first design
-    color: COLORS[0].id,
-    size: "M",
-    qty: 1,
-    notes: "",
-    agreed: false,
-  });
+ const [form, setForm] = useState({
+  name: "",
+  email: "",
+  address: "",
+  // we still keep a "selected" design for the cards
+  design: DESIGNS[0].id,
+  color: COLORS[0].id,
+  size: "M",
+
+  // ORDER LINES – one per shirt type
+  colonelA_size: "M",
+  colonelA_qty: 0,
+  colonelA_notes: "",
+
+  colonelBblack_size: "M",
+  colonelBblack_qty: 0,
+  colonelBblack_notes: "",
+
+  colonelBblue_size: "M",
+  colonelBblue_qty: 0,
+  colonelBblue_notes: "",
+
+  colonelCblack_size: "M",
+  colonelCblack_qty: 0,
+  colonelCblack_notes: "",
+
+  colonelCblue_size: "M",
+  colonelCblue_qty: 0,
+  colonelCblue_notes: "",
+
+  notes: "",
+  agreed: false,
+});
+
 
   // unique-ish order id
   const orderId = useMemo(() => {
@@ -62,10 +85,37 @@ export default function App() {
     )}${String(t.getDate()).padStart(2, "0")}-${t.getHours()}${t.getMinutes()}${t.getSeconds()}`;
   }, []);
 
-  const subtotal = useMemo(
-    () => calcSubtotal(Number(form.qty) || 1),
-    [form.qty]
-  );
+  // total shirts across all 5 designs
+const totalQty =
+  (Number(form.colonelA_qty) || 0) +
+  (Number(form.colonelBblack_qty) || 0) +
+  (Number(form.colonelBblue_qty) || 0) +
+  (Number(form.colonelCblack_qty) || 0) +
+  (Number(form.colonelCblue_qty) || 0);
+
+// never let it be 0 or the math breaks
+const safeTotalQty = totalQty > 0 ? totalQty : 1;
+
+const subtotal = useMemo(
+  () => calcSubtotal(safeTotalQty),
+  [safeTotalQty]
+);
+const unit = useMemo(
+  () => calcUnitPrice(safeTotalQty),
+  [safeTotalQty]
+);
+
+const shipping = 5;
+const taxRate = 0; // set if needed
+const tax = useMemo(
+  () => Number((subtotal * taxRate).toFixed(2)),
+  [subtotal, taxRate]
+);
+const total = useMemo(
+  () => Number((subtotal + shipping + tax).toFixed(2)),
+  [subtotal, shipping, tax]
+);
+
   const unit = useMemo(
     () => calcUnitPrice(Number(form.qty) || 1),
     [form.qty]
@@ -191,61 +241,215 @@ export default function App() {
             </div>
             <p className="text-xs text-zinc-500">
               Selected:{" "}
-              {
-                DESIGNS.find((d) => d.id === form.design)?.name
-              }
-            </p>
-{/* EXTRA SHIRTS (optional) */}
-<p className="text-sm mt-4 mb-2 font-semibold">Add another shirt (optional)</p>
-<div className="grid grid-cols-3 gap-4 mb-2">
+     {/* ORDER BY DESIGN – 5 lines */}
+<p className="text-sm mt-4 mb-2 font-semibold">Order by design</p>
+
+{/* 1) Colonel A */}
+<div className="grid grid-cols-4 gap-4 mb-2 items-end">
+  <div className="text-xs">
+    <p className="font-semibold">Colonel A</p>
+    <p className="text-[10px] text-zinc-500">White / base design</p>
+  </div>
   <label className="text-xs">
-    Shirt 2 Design
-    <select name="shirt2_design" className="mt-1 w-full rounded-xl border px-2 py-1">
-      <option value="">-- none --</option>
-      {DESIGNS.map((d) => (
-        <option key={d.id} value={d.id}>{d.name}</option>
-      ))}
-    </select>
-  </label>
-  <label className="text-xs">
-    Shirt 2 Size
-    <select name="shirt2_size" className="mt-1 w-full rounded-xl border px-2 py-1">
-      <option value="">--</option>
+    Size
+    <select
+      name="colonelA_size"
+      value={form.colonelA_size}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    >
       {SIZES.map((s) => (
         <option key={s} value={s}>{s}</option>
       ))}
     </select>
   </label>
   <label className="text-xs">
-    Shirt 2 Notes
-    <input name="shirt2_notes" className="mt-1 w-full rounded-xl border px-2 py-1" placeholder="blue / name on back?" />
+    Qty
+    <input
+      type="number"
+      min={0}
+      name="colonelA_qty"
+      value={form.colonelA_qty}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    />
+  </label>
+  <label className="text-xs">
+    Notes
+    <input
+      name="colonelA_notes"
+      value={form.colonelA_notes}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+      placeholder="name/#, pickup"
+    />
   </label>
 </div>
 
-<div className="grid grid-cols-3 gap-4 mb-2">
+{/* 2) Colonel B – Black */}
+<div className="grid grid-cols-4 gap-4 mb-2 items-end">
+  <div className="text-xs">
+    <p className="font-semibold">Colonel B – Black</p>
+  </div>
   <label className="text-xs">
-    Shirt 3 Design
-    <select name="shirt3_design" className="mt-1 w-full rounded-xl border px-2 py-1">
-      <option value="">-- none --</option>
-      {DESIGNS.map((d) => (
-        <option key={d.id} value={d.id}>{d.name}</option>
-      ))}
-    </select>
-  </label>
-  <label className="text-xs">
-    Shirt 3 Size
-    <select name="shirt3_size" className="mt-1 w-full rounded-xl border px-2 py-1">
-      <option value="">--</option>
+    Size
+    <select
+      name="colonelBblack_size"
+      value={form.colonelBblack_size}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    >
       {SIZES.map((s) => (
         <option key={s} value={s}>{s}</option>
       ))}
     </select>
   </label>
   <label className="text-xs">
-    Shirt 3 Notes
-    <input name="shirt3_notes" className="mt-1 w-full rounded-xl border px-2 py-1" placeholder="gift / pick up" />
+    Qty
+    <input
+      type="number"
+      min={0}
+      name="colonelBblack_qty"
+      value={form.colonelBblack_qty}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    />
+  </label>
+  <label className="text-xs">
+    Notes
+    <input
+      name="colonelBblack_notes"
+      value={form.colonelBblack_notes}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+      placeholder=""
+    />
   </label>
 </div>
+
+{/* 3) Colonel B – Blue */}
+<div className="grid grid-cols-4 gap-4 mb-2 items-end">
+  <div className="text-xs">
+    <p className="font-semibold">Colonel B – Blue</p>
+  </div>
+  <label className="text-xs">
+    Size
+    <select
+      name="colonelBblue_size"
+      value={form.colonelBblue_size}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    >
+      {SIZES.map((s) => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Qty
+    <input
+      type="number"
+      min={0}
+      name="colonelBblue_qty"
+      value={form.colonelBblue_qty}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    />
+  </label>
+  <label className="text-xs">
+    Notes
+    <input
+      name="colonelBblue_notes"
+      value={form.colonelBblue_notes}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+      placeholder=""
+    />
+  </label>
+</div>
+
+{/* 4) Colonel C – Black */}
+<div className="grid grid-cols-4 gap-4 mb-2 items-end">
+  <div className="text-xs">
+    <p className="font-semibold">Colonel C – Black</p>
+  </div>
+  <label className="text-xs">
+    Size
+    <select
+      name="colonelCblack_size"
+      value={form.colonelCblack_size}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    >
+      {SIZES.map((s) => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Qty
+    <input
+      type="number"
+      min={0}
+      name="colonelCblack_qty"
+      value={form.colonelCblack_qty}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    />
+  </label>
+  <label className="text-xs">
+    Notes
+    <input
+      name="colonelCblack_notes"
+      value={form.colonelCblack_notes}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+      placeholder=""
+    />
+  </label>
+</div>
+
+{/* 5) Colonel C – Blue */}
+<div className="grid grid-cols-4 gap-4 mb-4 items-end">
+  <div className="text-xs">
+    <p className="font-semibold">Colonel C – Blue</p>
+  </div>
+  <label className="text-xs">
+    Size
+    <select
+      name="colonelCblue_size"
+      value={form.colonelCblue_size}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    >
+      {SIZES.map((s) => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Qty
+    <input
+      type="number"
+      min={0}
+      name="colonelCblue_qty"
+      value={form.colonelCblue_qty}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+    />
+  </label>
+  <label className="text-xs">
+    Notes
+    <input
+      name="colonelCblue_notes"
+      value={form.colonelCblue_notes}
+      onChange={onChange}
+      className="mt-1 w-full rounded-xl border px-2 py-1"
+      placeholder=""
+    />
+  </label>
+</div>
+
 
             {/* color + size + qty */}
             <div className="grid grid-cols-3 gap-4">
