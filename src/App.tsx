@@ -106,13 +106,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <header className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="text-3xl font-extrabold tracking-tight">
-          Rich&apos;s Pop-Up Tee Shop
-        </h1>
-        <p className="text-sm mt-1 opacity-80">
-          Limited run. $25 each or 2 for $45. Pick your Colonel design below.
-        </p>
-      </header>
+  <h1 className="text-3xl font-extrabold tracking-tight">
+    Cov Cath Colonel “#TAKEITBACK” T-Shirt Shop
+  </h1>
+  <p className="text-sm mt-1 opacity-80">
+    Order your 2026 Colonel gear here. $25 each or 2 for $45. Choose your design below.
+  </p>
+</header>
+
 
       <main className="mx-auto max-w-5xl px-4 grid lg:grid-cols-2 gap-8 pb-20">
         {/* LEFT: order form */}
@@ -194,6 +195,57 @@ export default function App() {
                 DESIGNS.find((d) => d.id === form.design)?.name
               }
             </p>
+{/* EXTRA SHIRTS (optional) */}
+<p className="text-sm mt-4 mb-2 font-semibold">Add another shirt (optional)</p>
+<div className="grid grid-cols-3 gap-4 mb-2">
+  <label className="text-xs">
+    Shirt 2 Design
+    <select name="shirt2_design" className="mt-1 w-full rounded-xl border px-2 py-1">
+      <option value="">-- none --</option>
+      {DESIGNS.map((d) => (
+        <option key={d.id} value={d.id}>{d.name}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Shirt 2 Size
+    <select name="shirt2_size" className="mt-1 w-full rounded-xl border px-2 py-1">
+      <option value="">--</option>
+      {SIZES.map((s) => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Shirt 2 Notes
+    <input name="shirt2_notes" className="mt-1 w-full rounded-xl border px-2 py-1" placeholder="blue / name on back?" />
+  </label>
+</div>
+
+<div className="grid grid-cols-3 gap-4 mb-2">
+  <label className="text-xs">
+    Shirt 3 Design
+    <select name="shirt3_design" className="mt-1 w-full rounded-xl border px-2 py-1">
+      <option value="">-- none --</option>
+      {DESIGNS.map((d) => (
+        <option key={d.id} value={d.id}>{d.name}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Shirt 3 Size
+    <select name="shirt3_size" className="mt-1 w-full rounded-xl border px-2 py-1">
+      <option value="">--</option>
+      {SIZES.map((s) => (
+        <option key={s} value={s}>{s}</option>
+      ))}
+    </select>
+  </label>
+  <label className="text-xs">
+    Shirt 3 Notes
+    <input name="shirt3_notes" className="mt-1 w-full rounded-xl border px-2 py-1" placeholder="gift / pick up" />
+  </label>
+</div>
 
             {/* color + size + qty */}
             <div className="grid grid-cols-3 gap-4">
