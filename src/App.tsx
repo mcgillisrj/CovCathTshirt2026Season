@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
 
 // 🔧 UPDATE THESE
-const VENMO_HANDLE = "@YourBiz"; // your Venmo business handle
-const VENMO_QR_URL = "https://placehold.co/400x400?text=Venmo+QR"; // your QR image URL
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-id"; // your real Formspree URL
+const VENMO_HANDLE = "@allheartbasketballcoach"; // your Venmo business handle
+const VENMO_QR_URL = "https://venmo.com/code?user_id=2633059203547136545&created=1762111046"; // your QR image URL
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // your real Formspree URL
 
 // your 5 designs
 const DESIGNS = [
