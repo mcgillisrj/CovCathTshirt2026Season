@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
 
-// 🔧 UPDATE THESE
-const VENMO_HANDLE = "@allheartbasketballcoach"; // your Venmo business handle
-const VENMO_QR_URL = "/venmoQR.jpeg"; // your QR image URL
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // your real Formspree URL
+// 🔧 UPDATE THESE WITH YOUR INFO
+const VENMO_HANDLE = "@allheartbasketballcoach"; // <- your Venmo
+const VENMO_QR_URL = "/venmoQR.jpg"; // <- put your QR in /public as venmoQR.png
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree endpoint
 
-// your 5 designs
+// 👕 your 5 designs
 const DESIGNS = [
   { id: "colonelA", name: "Colonel A", image: "/ColonelA.png" },
   { id: "colonelBblack", name: "Colonel B – Black", image: "/ColonelB-Black.png" },
@@ -14,16 +14,10 @@ const DESIGNS = [
   { id: "colonelCblue", name: "Colonel C – Blue", image: "/ColonelC-Blue.png" },
 ];
 
-const COLORS = [
-  { id: "black", name: "Black" },
-  { id: "white", name: "White" },
-  { id: "heather", name: "Heather Gray" },
-  { id: "heather", name: "Royal Blue" },
-];
-
+// ⚙️ size options
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
-// pricing helpers: $25 or 2 for $45
+// pricing helpers: $25 each or 2 for $45
 function calcUnitPrice(qty: number) {
   if (qty >= 2) {
     const pairs = Math.floor(qty / 2);
@@ -42,40 +36,50 @@ function calcSubtotal(qty: number) {
 
 export default function App() {
   const [form, setForm] = useState({
+    // buyer info
     name: "",
     email: "",
     address: "",
-    // just for the image selection
-    design: DESIGNS[0].id,
-    color: COLORS[0].id,
-    size: "M",
 
-    // 5 line items
+    // just for showing which card is selected
+    design: DESIGNS[0].id,
+
+    // line 1 – Colonel A
+    colonelA_color: "White",
     colonelA_size: "M",
     colonelA_qty: 0,
     colonelA_notes: "",
 
+    // line 2 – Colonel B Black
+    colonelBblack_color: "Black",
     colonelBblack_size: "M",
     colonelBblack_qty: 0,
     colonelBblack_notes: "",
 
+    // line 3 – Colonel B Blue
+    colonelBblue_color: "Royal Blue",
     colonelBblue_size: "M",
     colonelBblue_qty: 0,
     colonelBblue_notes: "",
 
+    // line 4 – Colonel C Black
+    colonelCblack_color: "Black",
     colonelCblack_size: "M",
     colonelCblack_qty: 0,
     colonelCblack_notes: "",
 
+    // line 5 – Colonel C Blue
+    colonelCblue_color: "Royal Blue",
     colonelCblue_size: "M",
     colonelCblue_qty: 0,
     colonelCblue_notes: "",
 
+    // extra
     notes: "",
     agreed: false,
   });
 
-  // order id
+  // order id for buyer to paste in Venmo
   const orderId = useMemo(() => {
     const t = new Date();
     return `ORD-${t.getFullYear()}${String(t.getMonth() + 1).padStart(
@@ -84,7 +88,7 @@ export default function App() {
     )}${String(t.getDate()).padStart(2, "0")}-${t.getHours()}${t.getMinutes()}${t.getSeconds()}`;
   }, []);
 
-  // total shirts = sum of the 5 rows
+  // total shirts = sum of 5 rows
   const totalQty =
     (Number(form.colonelA_qty) || 0) +
     (Number(form.colonelBblack_qty) || 0) +
@@ -123,6 +127,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
+      {/* HEADER */}
       <header className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-3xl font-extrabold tracking-tight">
           Cov Cath Colonel “#TAKEITBACK” T-Shirt Shop
@@ -133,18 +138,18 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 grid lg:grid-cols-2 gap-8 pb-20">
-        {/* LEFT: order form */}
+        {/* LEFT: ORDER FORM */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
           <form action={FORMSPREE_ENDPOINT} method="POST" className="space-y-4">
-            {/* hidden fields */}
+            {/* hidden values so you see them in Formspree */}
             <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="total" value={total} />
             <input type="hidden" name="totalQty" value={totalQty} />
             <input type="hidden" name="selectedDesign" value={form.design} />
 
-            {/* contact */}
+            {/* buyer info */}
             <div className="grid grid-cols-2 gap-4">
               <label className="text-sm">
                 Full Name
@@ -171,7 +176,6 @@ export default function App() {
               </label>
             </div>
 
-            {/* address */}
             <label className="text-sm block">
               Shipping Address
               <textarea
@@ -184,7 +188,7 @@ export default function App() {
               />
             </label>
 
-            {/* design gallery */}
+            {/* design cards */}
             <label className="text-sm block mb-2">Choose a Design</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
               {DESIGNS.map((d) => (
@@ -196,11 +200,7 @@ export default function App() {
                     form.design === d.id ? "border-zinc-900 shadow-sm" : "border-zinc-300"
                   }`}
                 >
-                  <img
-                    src={d.image}
-                    alt={d.name}
-                    className="rounded-lg mb-1 w-full object-contain"
-                  />
+                  <img src={d.image} alt={d.name} className="rounded-lg mb-1 w-full object-contain" />
                   <p className="text-xs font-medium">{d.name}</p>
                 </button>
               ))}
@@ -209,15 +209,28 @@ export default function App() {
               Selected: {DESIGNS.find((d) => d.id === form.design)?.name}
             </p>
 
-            {/* ORDER BY DESIGN – 5 LINE ITEMS */}
+            {/* ORDER BY DESIGN – each line has Color + Size + Qty + Notes */}
             <p className="text-sm mt-4 mb-2 font-semibold">Order by design</p>
 
             {/* 1) Colonel A */}
-            <div className="grid grid-cols-4 gap-4 mb-2 items-end">
+            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
               <div className="text-xs">
                 <p className="font-semibold">Colonel A</p>
-                <p className="text-[10px] text-zinc-500">white/base</p>
               </div>
+              <label className="text-xs">
+                Color
+                <select
+                  name="colonelA_color"
+                  value={form.colonelA_color}
+                  onChange={onChange}
+                  className="mt-1 w-full rounded-xl border px-2 py-1"
+                >
+                  <option>White</option>
+                  <option>Black</option>
+                  <option>Heather Gray</option>
+                  <option>Royal Blue</option>
+                </select>
+              </label>
               <label className="text-xs">
                 Size
                 <select
@@ -257,10 +270,24 @@ export default function App() {
             </div>
 
             {/* 2) Colonel B – Black */}
-            <div className="grid grid-cols-4 gap-4 mb-2 items-end">
+            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
               <div className="text-xs">
                 <p className="font-semibold">Colonel B – Black</p>
               </div>
+              <label className="text-xs">
+                Color
+                <select
+                  name="colonelBblack_color"
+                  value={form.colonelBblack_color}
+                  onChange={onChange}
+                  className="mt-1 w-full rounded-xl border px-2 py-1"
+                >
+                  <option>Black</option>
+                  <option>White</option>
+                  <option>Heather Gray</option>
+                  <option>Royal Blue</option>
+                </select>
+              </label>
               <label className="text-xs">
                 Size
                 <select
@@ -299,10 +326,24 @@ export default function App() {
             </div>
 
             {/* 3) Colonel B – Blue */}
-            <div className="grid grid-cols-4 gap-4 mb-2 items-end">
+            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
               <div className="text-xs">
                 <p className="font-semibold">Colonel B – Blue</p>
               </div>
+              <label className="text-xs">
+                Color
+                <select
+                  name="colonelBblue_color"
+                  value={form.colonelBblue_color}
+                  onChange={onChange}
+                  className="mt-1 w-full rounded-xl border px-2 py-1"
+                >
+                  <option>Royal Blue</option>
+                  <option>White</option>
+                  <option>Black</option>
+                  <option>Heather Gray</option>
+                </select>
+              </label>
               <label className="text-xs">
                 Size
                 <select
@@ -341,10 +382,24 @@ export default function App() {
             </div>
 
             {/* 4) Colonel C – Black */}
-            <div className="grid grid-cols-4 gap-4 mb-2 items-end">
+            <div className="grid grid-cols-5 gap-4 mb-2 items-end">
               <div className="text-xs">
                 <p className="font-semibold">Colonel C – Black</p>
               </div>
+              <label className="text-xs">
+                Color
+                <select
+                  name="colonelCblack_color"
+                  value={form.colonelCblack_color}
+                  onChange={onChange}
+                  className="mt-1 w-full rounded-xl border px-2 py-1"
+                >
+                  <option>Black</option>
+                  <option>White</option>
+                  <option>Heather Gray</option>
+                  <option>Royal Blue</option>
+                </select>
+              </label>
               <label className="text-xs">
                 Size
                 <select
@@ -383,10 +438,24 @@ export default function App() {
             </div>
 
             {/* 5) Colonel C – Blue */}
-            <div className="grid grid-cols-4 gap-4 mb-4 items-end">
+            <div className="grid grid-cols-5 gap-4 mb-4 items-end">
               <div className="text-xs">
                 <p className="font-semibold">Colonel C – Blue</p>
               </div>
+              <label className="text-xs">
+                Color
+                <select
+                  name="colonelCblue_color"
+                  value={form.colonelCblue_color}
+                  onChange={onChange}
+                  className="mt-1 w-full rounded-xl border px-2 py-1"
+                >
+                  <option>Royal Blue</option>
+                  <option>White</option>
+                  <option>Black</option>
+                  <option>Heather Gray</option>
+                </select>
+              </label>
               <label className="text-xs">
                 Size
                 <select
@@ -424,7 +493,7 @@ export default function App() {
               </label>
             </div>
 
-            {/* notes */}
+            {/* extra notes */}
             <label className="text-sm block">
               Notes (optional)
               <textarea
@@ -436,7 +505,7 @@ export default function App() {
               />
             </label>
 
-            {/* totals */}
+            {/* TOTALS */}
             <div className="rounded-xl border bg-zinc-50 p-4 text-sm">
               <div className="flex items-center justify-between">
                 <span>Total shirts</span>
@@ -467,7 +536,7 @@ export default function App() {
               </p>
             </div>
 
-            {/* agree + submit */}
+            {/* SUBMIT */}
             <label className="flex items-start gap-3 text-sm">
               <input
                 type="checkbox"
@@ -488,12 +557,11 @@ export default function App() {
           </form>
         </section>
 
-        {/* RIGHT: venmo instructions */}
+        {/* RIGHT: VENMO PANEL */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-2">2) Pay on Venmo</h2>
           <p className="text-sm mb-4">
-            Open Venmo and pay{" "}
-            <span className="font-semibold">{VENMO_HANDLE}</span> for the{" "}
+            Open Venmo and pay <span className="font-semibold">{VENMO_HANDLE}</span> for the{" "}
             <span className="font-semibold">Total</span> shown. In the note, paste your Order ID{" "}
             <span className="font-mono">{orderId}</span>.
           </p>
@@ -530,7 +598,7 @@ export default function App() {
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Support</p>
-                <p>Email: you@example.com</p>
+                <p>Email: allheartbasketball247@gmail.com</p>
               </div>
             </div>
           </div>
