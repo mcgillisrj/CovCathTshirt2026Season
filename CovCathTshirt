@@ -1,0 +1,12 @@
+tee-shop/
+  package.json
+  vite.config.js
+  index.html
+  postcss.config.js
+  tailwind.config.js
+  src/
+    main.tsx
+    App.tsx
+  src/index.css
+  tsconfig.json
+  tsconfig.node.json
