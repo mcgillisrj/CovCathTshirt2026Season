@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
 
 // 🔧 YOUR SETTINGS
-const VENMO_HANDLE = "@YourBiz"; // <- change to your Venmo
-const VENMO_QR_URL = "/venmoQR.png"; // <- put your QR in /public
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-id"; // <- your real Formspree URL
+const VENMO_HANDLE = "@allheartbasketballcoach"; // <- change to your Venmo
+const VENMO_QR_URL = "/venmoQR.jpeg"; // <- put your QR in /public
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree URL
 
 // your 5 designs
 const DESIGNS = [
@@ -446,7 +446,7 @@ export default function App() {
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Support</p>
-                <p>Email: you@example.com</p>
+                <p>Email: mcgillisrj@gmail.com</p>
               </div>
             </div>
           </div>
