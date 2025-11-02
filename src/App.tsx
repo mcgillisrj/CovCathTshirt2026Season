@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
 
 // 🔧 YOUR SETTINGS
-const VENMO_HANDLE = "@allheartbasketballcoach"; // <-- change to your Venmo
-const VENMO_QR_URL = "/venmoQR.jpeg"; // <-- drop QR in /public
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <-- your real Formspree URL
+const VENMO_HANDLE = "@allheartbasketballcoach"; // <- change to your Venmo
+const VENMO_QR_URL = "/venmoQR.jpeg"; // <- put your QR in /public
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree URL
 
 // your 5 designs
 const DESIGNS = [
@@ -29,11 +29,12 @@ function calcUnitPrice(qty: number) {
 }
 
 export default function App() {
-  // base form
+  // top-level buyer info
   const [form, setForm] = useState({
     name: "",
     email: "",
     address: "",
+    playerInfo: "", // <-- player name + number
     notes: "",
     agreed: false,
   });
@@ -46,7 +47,6 @@ export default function App() {
       color: string;
       size: string;
       qty: number;
-      notes: string;
     }>
   >([
     {
@@ -55,11 +55,16 @@ export default function App() {
       color: "White",
       size: "M",
       qty: 1,
-      notes: "",
     },
   ]);
 
-  // order id
+  // image preview modal
+  const [preview, setPreview] = useState<{
+    open: boolean;
+    image?: string;
+    title?: string;
+  }>({ open: false });
+
   const orderId = useMemo(() => {
     const t = new Date();
     return `ORD-${t.getFullYear()}${String(t.getMonth() + 1).padStart(
@@ -78,7 +83,6 @@ export default function App() {
   const tax = Number((subtotal * taxRate).toFixed(2));
   const total = Number((subtotal + shipping + tax).toFixed(2));
 
-  // handlers
   const onFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -99,8 +103,7 @@ export default function App() {
         item.id === id
           ? {
               ...item,
-              [field]:
-                field === "qty" ? Number(value) : value,
+              [field]: field === "qty" ? Number(value) : value,
             }
           : item
       )
@@ -116,7 +119,6 @@ export default function App() {
         color: "White",
         size: "M",
         qty: 1,
-        notes: "",
       },
     ]);
   };
@@ -125,33 +127,35 @@ export default function App() {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // this goes to Formspree so you see all shirts
+  // send to Formspree
   const orderLinesJSON = JSON.stringify(lineItems);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
+      {/* HEADER */}
       <header className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-3xl font-extrabold tracking-tight">
           Cov Cath Colonel “#TAKEITBACK” T-Shirt Shop
         </h1>
         <p className="text-sm mt-1 opacity-80">
-          $25 each or 2 for $45. Pick a design, color, size, and add as many rows as you need.
+          $25 each or 2 for $45. Add as many shirts as you need. Please include player name + jersey
+          number so we can match orders.
         </p>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 grid lg:grid-cols-2 gap-8 pb-20">
-        {/* LEFT */}
+        {/* LEFT: FORM */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
           <form action={FORMSPREE_ENDPOINT} method="POST" className="space-y-4">
-            {/* hidden stuff */}
+            {/* hidden for Formspree */}
             <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="total" value={total} />
             <input type="hidden" name="totalQty" value={totalQty} />
             <input type="hidden" name="orderLinesJSON" value={orderLinesJSON} />
 
-            {/* contact */}
+            {/* name + email */}
             <div className="grid grid-cols-2 gap-4">
               <label className="text-sm">
                 Full Name
@@ -178,8 +182,9 @@ export default function App() {
               </label>
             </div>
 
+            {/* address */}
             <label className="text-sm block">
-              Shipping Address
+              Shipping / Delivery Address
               <textarea
                 required
                 name="address"
@@ -190,13 +195,37 @@ export default function App() {
               />
             </label>
 
-            {/* design cards – just for preview, not required */}
-            <label className="text-sm block mb-2">Designs available</label>
+            {/* player info */}
+            <label className="text-sm block">
+              Player name & jersey number (required)
+              <input
+                required
+                name="playerInfo"
+                value={form.playerInfo}
+                onChange={onFormChange}
+                className="mt-1 w-full rounded-xl border px-3 py-2"
+                placeholder="Ex: Athens McGillis #1"
+              />
+              <p className="text-xs text-zinc-500 mt-1">
+                If ordering for more than one player, list all here.
+              </p>
+            </label>
+
+            {/* design gallery (click to preview) */}
+            <label className="text-sm block mb-2">Designs available (click to preview)</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
               {DESIGNS.map((d) => (
-                <div
+                <button
                   key={d.id}
-                  className="rounded-xl border p-2 text-center bg-zinc-50"
+                  type="button"
+                  onClick={() =>
+                    setPreview({
+                      open: true,
+                      image: d.image,
+                      title: d.name,
+                    })
+                  }
+                  className="rounded-xl border p-2 text-center bg-zinc-50 hover:border-zinc-700 transition"
                 >
                   <img
                     src={d.image}
@@ -204,7 +233,8 @@ export default function App() {
                     className="rounded-lg mb-1 w-full object-contain"
                   />
                   <p className="text-xs font-medium">{d.name}</p>
-                </div>
+                  <p className="text-[10px] text-zinc-400">Click to enlarge</p>
+                </button>
               ))}
             </div>
 
@@ -220,9 +250,7 @@ export default function App() {
                   Design
                   <select
                     value={item.design}
-                    onChange={(e) =>
-                      onLineChange(item.id, "design", e.target.value)
-                    }
+                    onChange={(e) => onLineChange(item.id, "design", e.target.value)}
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   >
                     {DESIGNS.map((d) => (
@@ -237,9 +265,7 @@ export default function App() {
                   Color
                   <select
                     value={item.color}
-                    onChange={(e) =>
-                      onLineChange(item.id, "color", e.target.value)
-                    }
+                    onChange={(e) => onLineChange(item.id, "color", e.target.value)}
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   >
                     {COLORS.map((c) => (
@@ -254,9 +280,7 @@ export default function App() {
                   Size
                   <select
                     value={item.size}
-                    onChange={(e) =>
-                      onLineChange(item.id, "size", e.target.value)
-                    }
+                    onChange={(e) => onLineChange(item.id, "size", e.target.value)}
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   >
                     {SIZES.map((s) => (
@@ -280,24 +304,18 @@ export default function App() {
                   />
                 </label>
 
-                <div className="flex gap-2 items-center">
-                  <input
-                    value={item.notes}
-                    onChange={(e) =>
-                      onLineChange(item.id, "notes", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-xl border px-2 py-1 text-xs"
-                    placeholder="notes"
-                  />
+                <div className="flex items-center gap-2">
                   {lineItems.length > 1 ? (
                     <button
                       type="button"
                       onClick={() => removeLine(item.id)}
                       className="text-[10px] text-red-500"
                     >
-                      X
+                      Remove
                     </button>
-                  ) : null}
+                  ) : (
+                    <span className="text-[10px] text-zinc-300">—</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -310,15 +328,15 @@ export default function App() {
               + Add another shirt
             </button>
 
-            {/* extra notes */}
+            {/* extra notes (for you) */}
             <label className="text-sm block">
-              Notes (optional)
+              Notes for Rich (optional)
               <textarea
                 name="notes"
                 value={form.notes}
                 onChange={onFormChange}
                 className="mt-1 w-full rounded-xl border px-3 py-2"
-                placeholder="Anything special?"
+                placeholder="Delivery instructions, pick up after practice, etc."
               />
             </label>
 
@@ -349,20 +367,22 @@ export default function App() {
                 <span className="text-lg font-bold">${total.toFixed(2)}</span>
               </div>
               <p className="mt-2 text-xs opacity-70">
-                Discount auto-calculated: $25 each or 2 for $45.
+                Discount auto-applies: $25 each or 2 for $45.
               </p>
             </div>
 
             {/* agree + submit */}
             <label className="flex items-start gap-3 text-sm">
               <input
-                required
                 type="checkbox"
                 name="agreed"
                 checked={form.agreed}
                 onChange={onFormChange}
+                required
               />
-              <span>I will pay on Venmo and include my Order ID in the note.</span>
+              <span>
+                I will pay on Venmo and include my Order ID in the note.
+              </span>
             </label>
 
             <button
@@ -374,7 +394,7 @@ export default function App() {
           </form>
         </section>
 
-        {/* RIGHT */}
+        {/* RIGHT: VENMO */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-2">2) Pay on Venmo</h2>
           <p className="text-sm mb-4">
@@ -433,6 +453,24 @@ export default function App() {
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-xs opacity-70">
         <p>© {new Date().getFullYear()} Cov Cath Colonel Shirts • All rights reserved.</p>
       </footer>
+
+      {/* IMAGE PREVIEW MODAL */}
+      {preview.open ? (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-4 max-w-lg w-full mx-4 relative">
+            <button
+              onClick={() => setPreview({ open: false })}
+              className="absolute top-2 right-2 text-zinc-500 hover:text-zinc-900"
+            >
+              ✕
+            </button>
+            <h3 className="text-sm font-semibold mb-3">{preview.title}</h3>
+            {preview.image ? (
+              <img src={preview.image} alt={preview.title} className="w-full rounded-xl" />
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
