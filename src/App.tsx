@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 
 // 🔧 UPDATE THESE
 const VENMO_HANDLE = "@allheartbasketballcoach"; // your Venmo business handle
-const VENMO_QR_URL = "https://venmo.com/code?user_id=2633059203547136545&created=1762111046"; // your QR image URL
+const VENMO_QR_URL = "/venmoQR.jpeg"; // your QR image URL
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // your real Formspree URL
 
 // your 5 designs
@@ -18,6 +18,7 @@ const COLORS = [
   { id: "black", name: "Black" },
   { id: "white", name: "White" },
   { id: "heather", name: "Heather Gray" },
+  { id: "heather", name: "Royal Blue" },
 ];
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
