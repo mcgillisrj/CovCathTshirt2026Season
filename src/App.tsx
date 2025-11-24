@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 
 // 🔧 YOUR SETTINGS
 const VENMO_HANDLE = "@allheartbasketballcoach"; // <- change to your Venmo
-const VENMO_QR_URL = "/venmoQR.png"; // <- put your QR in /public
+const VENMO_QR_URL = "/venmoQR.jpeg"; // <- put your QR in /public
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree URL
 
 // your 5 designs (names can include "Black" as an artwork label; shirt color options exclude black)
