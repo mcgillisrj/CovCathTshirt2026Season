@@ -452,8 +452,7 @@ export default function App() {
           <div className="mt-6 rounded-2xl border p-4 text-xs leading-5">
             <p className="font-semibold mb-1">Refunds &amp; Exchanges</p>
             <p>
-              Exchanges accepted for unworn tees within 14 days. Buyer pays return shipping unless we
-              messed up. Custom prints are final sale.
+              Exchanges are not accepted so ensure your sizes, name, number, and colors are correct. Custom prints are final sale.
             </p>
           </div>
         </section>
