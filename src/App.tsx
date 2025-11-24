@@ -2,10 +2,10 @@ import React, { useMemo, useState } from "react";
 
 // 🔧 YOUR SETTINGS
 const VENMO_HANDLE = "@allheartbasketballcoach"; // <- change to your Venmo
-const VENMO_QR_URL = "/venmoQR.jpeg"; // <- put your QR in /public
+const VENMO_QR_URL = "/venmoQR.png"; // <- put your QR in /public
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree URL
 
-// your 5 designs
+// your 5 designs (names can include "Black" as an artwork label; shirt color options exclude black)
 const DESIGNS = [
   { id: "colonelA", name: "Colonel A", image: "/ColonelA.png" },
   { id: "colonelBblack", name: "Colonel B – Black", image: "/ColonelB-Black.png" },
@@ -14,10 +14,12 @@ const DESIGNS = [
   { id: "colonelCblue", name: "Colonel C – Blue", image: "/ColonelC-Blue.png" },
 ];
 
-const COLORS = ["White", "Black", "Heather Gray", "Royal Blue"];
+// ❗ Updated COLORS: removed "Black"
+const COLORS = ["White", "Heather Gray", "Royal Blue"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
-// pricing: $25 each, 2 for $45
+// Pricing model: for every 2 shirts, total = +$45; any leftover singles = +$25.
+// e.g., 3 => 45 + 25 = 70; 4 => 45 + 45 = 90.
 function calcSubtotal(qty: number) {
   const pairs = Math.floor(qty / 2);
   const remainder = qty % 2;
@@ -52,7 +54,7 @@ export default function App() {
     {
       id: 1,
       design: "colonelA",
-      color: "White",
+      color: "White", // default color (no black available)
       size: "M",
       qty: 1,
     },
@@ -136,8 +138,7 @@ export default function App() {
           Cov Cath Colonel “#TAKEITBACK” T-Shirt Shop
         </h1>
         <p className="text-sm mt-1 opacity-80">
-          $25 each or 2 for $45. Add as many shirts as you need. Please include player name + jersey
-          number so we can match orders.
+          $25 each, or 2 for $45 (auto-discounted per pair). Add as many shirts as you need.
         </p>
       </header>
 
@@ -146,7 +147,7 @@ export default function App() {
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
-          {/* IMPORTANT: enctype added here so file uploads work */}
+          {/* enctype enables file upload */}
           <form
             action={FORMSPREE_ENDPOINT}
             method="POST"
@@ -225,7 +226,7 @@ export default function App() {
                 className="mt-1 w-full text-sm"
               />
               <p className="text-xs text-zinc-500 mt-1">
-                You can upload a photo of your son’s signature to print on the shirt (PNG/JPG).
+                Upload a clear photo of your son’s signature (PNG/JPG).
               </p>
             </label>
 
@@ -377,10 +378,7 @@ export default function App() {
                 <span className="text-lg font-bold">${total.toFixed(2)}</span>
               </div>
               <p className="mt-2 text-xs opacity-70">
-                Discount auto-applies: $25 each or 2 for $45.
-              </p>
-              <p className="mt-1 text-[10px] text-zinc-500">
-                Signature image will be sent with this order.
+                Pricing auto-applies: 2 for $45; singles $25 (e.g., 3 = $70, 4 = $90).
               </p>
             </div>
 
