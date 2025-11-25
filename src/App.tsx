@@ -431,16 +431,14 @@ export default function App() {
                 <ul className="list-disc ml-5 mt-1">
                   <li>Fast checkout for buyers</li>
                   <li>Keeps personal &amp; business separate</li>
-                  <li>QR + preset amounts for $25 or $45</li>
-                </ul>
+                 </ul>
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Pro tips</p>
                 <ul className="list-disc ml-5 mt-1">
                   <li>Tell buyers to paste the Order ID in the note</li>
                   <li>Set up preset QR amounts in Venmo</li>
-                  <li>Use Pirate Ship for labels</li>
-                </ul>
+                  </ul>
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Support</p>
@@ -452,7 +450,7 @@ export default function App() {
           <div className="mt-6 rounded-2xl border p-4 text-xs leading-5">
             <p className="font-semibold mb-1">Refunds &amp; Exchanges</p>
             <p>
-              Exchanges are not accepted so ensure your sizes, name, number, and colors are correct. Custom prints are final sale.
+              Exchanges are not accepted, so ensure your sizes, name, number, and colors are correct. Custom prints are final sale.
             </p>
           </div>
         </section>
