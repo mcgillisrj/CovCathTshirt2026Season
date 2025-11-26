@@ -78,7 +78,7 @@ export default function App() {
   const safeTotalQty = totalQty > 0 ? totalQty : 1;
   const subtotal = calcSubtotal(safeTotalQty);
   const unit = calcUnitPrice(safeTotalQty);
-  const shipping = 5;
+  const shipping = 1;
   const taxRate = 0;
   const tax = Number((subtotal * taxRate).toFixed(2));
   const total = Number((subtotal + shipping + tax).toFixed(2));
