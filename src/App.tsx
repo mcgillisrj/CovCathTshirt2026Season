@@ -1,11 +1,12 @@
+
 import React, { useMemo, useState } from "react";
 
 // 🔧 YOUR SETTINGS
-const VENMO_HANDLE = "@allheartbasketballcoach"; // <- change to your Venmo
-const VENMO_QR_URL = "/venmoQR.jpeg"; // <- put your QR in /public
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw"; // <- your real Formspree URL
+const VENMO_HANDLE = "@allheartbasketballcoach";
+const VENMO_QR_URL = "/venmoQR.jpeg";
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xwpwagvw";
 
-// your 5 designs (names can include "Black" as an artwork label; shirt color options exclude black)
+// your 5 designs (names can include Black as artwork label)
 const DESIGNS = [
   { id: "colonelA", name: "Colonel A", image: "/ColonelA.png" },
   { id: "colonelBblack", name: "Colonel B – Black", image: "/ColonelB-Black.png" },
@@ -14,15 +15,14 @@ const DESIGNS = [
   { id: "colonelCblue", name: "Colonel C – Blue", image: "/ColonelC-Blue.png" },
 ];
 
-// ❗ Updated COLORS: removed "Black"
+// ❗ COLORS (no black)
 const COLORS = ["White", "Heather Gray", "Royal Blue"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
-// Pricing model: for every 2 shirts, total = +$45; any leftover singles = +$25.
-// e.g., 3 => 45 + 25 = 70; 4 => 45 + 45 = 90.
+// pricing logic
 function calcSubtotal(qty: number) {
-  const pairs = Math.floor(qty / 2);
-  const remainder = qty % 2;
+  const pairs = Math.floor(qty / 2);     // every 2 = $45
+  const remainder = qty % 2;             // leftover = $25 each
   return pairs * 45 + remainder * 25;
 }
 function calcUnitPrice(qty: number) {
@@ -31,7 +31,6 @@ function calcUnitPrice(qty: number) {
 }
 
 export default function App() {
-  // top-level buyer info
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -41,72 +40,35 @@ export default function App() {
     agreed: false,
   });
 
-  // dynamic line items
-  const [lineItems, setLineItems] = useState<
-    Array<{
-      id: number;
-      design: string;
-      color: string;
-      size: string;
-      qty: number;
-    }>
-  >([
-    {
-      id: 1,
-      design: "colonelA",
-      color: "White", // default color (no black available)
-      size: "M",
-      qty: 1,
-    },
+  const [lineItems, setLineItems] = useState([
+    { id: 1, design: "colonelA", color: "White", size: "M", qty: 1 },
   ]);
 
-  // image preview modal
-  const [preview, setPreview] = useState<{ open: boolean; image?: string; title?: string }>({
-    open: false,
-  });
+  const [preview, setPreview] = useState({ open: false, image: "", title: "" });
 
   const orderId = useMemo(() => {
     const t = new Date();
-    return `ORD-${t.getFullYear()}${String(t.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}${String(t.getDate()).padStart(2, "0")}-${t.getHours()}${t.getMinutes()}${t.getSeconds()}`;
+    return `ORD-${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, "0")}${String(
+      t.getDate()
+    ).padStart(2, "0")}-${t.getHours()}${t.getMinutes()}${t.getSeconds()}`;
   }, []);
 
-  // totals
-  const totalQty = lineItems.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
-  const safeTotalQty = totalQty > 0 ? totalQty : 1;
-  const subtotal = calcSubtotal(safeTotalQty);
-  const unit = calcUnitPrice(safeTotalQty);
+  const totalQty = lineItems.reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
+  const safeQty = totalQty > 0 ? totalQty : 1;
+  const subtotal = calcSubtotal(safeQty);
+  const unit = calcUnitPrice(safeQty);
   const shipping = 1;
-  const taxRate = 0;
-  const tax = Number((subtotal * taxRate).toFixed(2));
-  const total = Number((subtotal + shipping + tax).toFixed(2));
+  const tax = 0;
+  const total = subtotal + shipping + tax;
 
-  const onFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const onFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const onLineChange = (
-    id: number,
-    field: keyof (typeof lineItems)[number],
-    value: string | number
-  ) => {
+  const onLineChange = (id, field, value) => {
     setLineItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]: field === "qty" ? Number(value) : value,
-            }
-          : item
-      )
+      prev.map((i) => (i.id === id ? { ...i, [field]: field === "qty" ? Number(value) : value } : i))
     );
   };
 
@@ -123,44 +85,36 @@ export default function App() {
     ]);
   };
 
-  const removeLine = (id: number) => {
-    setLineItems((prev) => prev.filter((item) => item.id !== id));
+  const removeLine = (id) => {
+    setLineItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  // send to Formspree as JSON
   const orderLinesJSON = JSON.stringify(lineItems);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      {/* HEADER */}
       <header className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-3xl font-extrabold tracking-tight">
           Cov Cath Colonel “#TAKEITBACK” T-Shirt Shop
         </h1>
         <p className="text-sm mt-1 opacity-80">
-          $25 each, or 2 for $45 (auto-discounted per pair). Add as many shirts as you need.
+          $25 each • 2 for $45 • Auto-discount applied.
         </p>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 grid lg:grid-cols-2 gap-8 pb-20">
-        {/* LEFT: FORM */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
-          {/* enctype enables file upload */}
-          <form
-            action={FORMSPREE_ENDPOINT}
-            method="POST"
-            encType="multipart/form-data"
-            className="space-y-4"
-          >
-            {/* hidden fields */}
+          {/* REMOVED encType to prevent upload errors */}
+          <form action={FORMSPREE_ENDPOINT} method="POST" className="space-y-4">
+            {/* hidden */}
             <input type="hidden" name="orderId" value={orderId} />
             <input type="hidden" name="total" value={total} />
             <input type="hidden" name="totalQty" value={totalQty} />
             <input type="hidden" name="orderLinesJSON" value={orderLinesJSON} />
 
-            {/* name + email */}
+            {/* buyer info */}
             <div className="grid grid-cols-2 gap-4">
               <label className="text-sm">
                 Full Name
@@ -170,9 +124,9 @@ export default function App() {
                   value={form.name}
                   onChange={onFormChange}
                   className="mt-1 w-full rounded-xl border px-3 py-2"
-                  placeholder="Jane Doe"
                 />
               </label>
+
               <label className="text-sm">
                 Email
                 <input
@@ -182,12 +136,10 @@ export default function App() {
                   value={form.email}
                   onChange={onFormChange}
                   className="mt-1 w-full rounded-xl border px-3 py-2"
-                  placeholder="you@example.com"
                 />
               </label>
             </div>
 
-            {/* address */}
             <label className="text-sm block">
               Shipping / Delivery Address
               <textarea
@@ -196,11 +148,9 @@ export default function App() {
                 value={form.address}
                 onChange={onFormChange}
                 className="mt-1 w-full rounded-xl border px-3 py-2"
-                placeholder="Street, City, State, ZIP"
               />
             </label>
 
-            {/* player info */}
             <label className="text-sm block">
               Player name & jersey number (required)
               <input
@@ -209,49 +159,27 @@ export default function App() {
                 value={form.playerInfo}
                 onChange={onFormChange}
                 className="mt-1 w-full rounded-xl border px-3 py-2"
-                placeholder="Ex: Athens McGillis #1"
+                placeholder="Example: Athens McGillis #1"
               />
-              <p className="text-xs text-zinc-500 mt-1">
-                If ordering for more than one player, list all here.
-              </p>
             </label>
 
-            {/* signature upload */}
-            <label className="text-sm block">
-              Upload player signature (optional)
-              <input
-                type="file"
-                name="playerSignature"
-                accept="image/*"
-                className="mt-1 w-full text-sm"
-              />
-              <p className="text-xs text-zinc-500 mt-1">
-                Upload a clear photo of your son’s signature (PNG/JPG).
-              </p>
-            </label>
-
-            {/* design gallery (click to preview) */}
+            {/* designs */}
             <label className="text-sm block mb-2">Designs available (click to preview)</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
               {DESIGNS.map((d) => (
                 <button
-                  key={d.id}
                   type="button"
+                  key={d.id}
                   onClick={() => setPreview({ open: true, image: d.image, title: d.name })}
-                  className="rounded-xl border p-2 text-center bg-zinc-50 hover:border-zinc-700 transition"
+                  className="rounded-xl border p-2 text-center bg-zinc-50 hover:border-zinc-700"
                 >
-                  <img
-                    src={d.image}
-                    alt={d.name}
-                    className="rounded-lg mb-1 w-full object-contain"
-                  />
-                  <p className="text-xs font-medium">{d.name}</p>
-                  <p className="text-[10px] text-zinc-400">Click to enlarge</p>
+                  <img src={d.image} className="rounded-lg mb-1 w-full" />
+                  <p className="text-xs">{d.name}</p>
                 </button>
               ))}
             </div>
 
-            {/* DYNAMIC ROWS */}
+            {/* items */}
             <p className="text-sm mt-4 mb-2 font-semibold">Shirts in this order</p>
 
             {lineItems.map((item) => (
@@ -282,9 +210,7 @@ export default function App() {
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   >
                     {COLORS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
+                      <option key={c}>{c}</option>
                     ))}
                   </select>
                 </label>
@@ -297,9 +223,7 @@ export default function App() {
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   >
                     {SIZES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
+                      <option key={s}>{s}</option>
                     ))}
                   </select>
                 </label>
@@ -310,7 +234,7 @@ export default function App() {
                     type="number"
                     min={0}
                     value={item.qty}
-                    onChange={(e) => onLineChange(item.id, "qty", Number(e.target.value))}
+                    onChange={(e) => onLineChange(item.id, "qty", e.target.value)}
                     className="mt-1 w-full rounded-xl border px-2 py-1"
                   />
                 </label>
@@ -339,50 +263,44 @@ export default function App() {
               + Add another shirt
             </button>
 
-            {/* notes */}
             <label className="text-sm block">
-              Notes for Rich (optional)
+              Notes (optional)
               <textarea
                 name="notes"
                 value={form.notes}
                 onChange={onFormChange}
                 className="mt-1 w-full rounded-xl border px-3 py-2"
-                placeholder="Delivery instructions, pick up after practice, etc."
+                placeholder="Delivery instructions, etc."
               />
             </label>
 
             {/* totals */}
             <div className="rounded-xl border bg-zinc-50 p-4 text-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span>Total shirts</span>
-                <span className="font-semibold">{totalQty}</span>
+                <span>{totalQty}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span>Unit price</span>
-                <span className="font-semibold">${unit.toFixed(2)}</span>
+                <span>${unit.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span>Shipping</span>
-                <span className="font-semibold">${shipping.toFixed(2)}</span>
+                <span>${shipping.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Tax</span>
-                <span className="font-semibold">${tax.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between border-t mt-2 pt-2">
+              <div className="flex justify-between">
                 <span>Total</span>
                 <span className="text-lg font-bold">${total.toFixed(2)}</span>
               </div>
-              <p className="mt-2 text-xs opacity-70">
-                Pricing auto-applies: 2 for $45; singles $25 (e.g., 3 = $70, 4 = $90).
+              <p className="text-xs opacity-70 mt-1">
+                Pricing auto-applies: 2 for $45, singles $25.
               </p>
             </div>
 
-            {/* agree + submit */}
             <label className="flex items-start gap-3 text-sm">
               <input
                 type="checkbox"
@@ -394,34 +312,30 @@ export default function App() {
               <span>I will pay on Venmo and include my Order ID in the note.</span>
             </label>
 
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-zinc-900 text-white font-semibold py-3 hover:opacity-90"
-            >
-              1) Submit Order
+            <button className="w-full rounded-xl bg-zinc-900 text-white py-3 font-semibold">
+              Submit Order
             </button>
           </form>
         </section>
 
-        {/* RIGHT: VENMO */}
+        {/* RIGHT SIDE */}
         <section className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-xl font-bold mb-2">2) Pay on Venmo</h2>
           <p className="text-sm mb-4">
-            Open Venmo and pay <span className="font-semibold">{VENMO_HANDLE}</span> for the{" "}
-            <span className="font-semibold">Total</span> shown. In the note, paste your Order ID{" "}
-            <span className="font-mono">{orderId}</span>.
+            Pay <span className="font-semibold">{VENMO_HANDLE}</span> for the{" "}
+            <span className="font-semibold">Total</span> shown.  
+            Add Order ID: <span className="font-mono">{orderId}</span>
           </p>
 
-          <div className="grid md:grid-cols-2 gap-4 items-start">
-            <div className="rounded-2xl border p-3 flex flex-col items-center">
-              <img src={VENMO_QR_URL} alt="Venmo QR" className="rounded-xl w-full" />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border p-3">
+              <img src={VENMO_QR_URL} className="rounded-xl w-full" />
               <a
                 href={`https://venmo.com/${VENMO_HANDLE.replace("@", "")}`}
                 target="_blank"
-                rel="noreferrer"
                 className="mt-3 inline-block rounded-xl border px-4 py-2 text-sm"
               >
-                Open {VENMO_HANDLE} in Venmo
+                Open Venmo
               </a>
             </div>
 
@@ -429,16 +343,9 @@ export default function App() {
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Why Venmo Business?</p>
                 <ul className="list-disc ml-5 mt-1">
-                  <li>Fast checkout for buyers</li>
-                  <li>Keeps personal &amp; business separate</li>
-                 </ul>
-              </div>
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="font-semibold">Pro tips</p>
-                <ul className="list-disc ml-5 mt-1">
-                  <li>Tell buyers to paste the Order ID in the note</li>
-                  <li>Set up preset QR amounts in Venmo</li>
-                  </ul>
+                  <li>Fast checkout</li>
+                  <li>Keeps personal & business separate</li>
+                </ul>
               </div>
               <div className="rounded-xl bg-zinc-50 p-3">
                 <p className="font-semibold">Support</p>
@@ -447,36 +354,35 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl border p-4 text-xs leading-5">
-            <p className="font-semibold mb-1">Refunds &amp; Exchanges</p>
+          <div className="mt-6 rounded-2xl border p-4 text-xs">
+            <p className="font-semibold mb-1">Refunds & Exchanges</p>
             <p>
-              Exchanges are not accepted, so ensure your sizes, name, number, and colors are correct. Custom prints are final sale.
+              All custom prints are final sale. Double-check name, number, and size.
             </p>
           </div>
         </section>
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-xs opacity-70">
-        <p>© {new Date().getFullYear()} Cov Cath Colonel Shirts • All rights reserved.</p>
+        © {new Date().getFullYear()} Cov Cath Colonel Shirts • All rights reserved.
       </footer>
 
       {/* IMAGE PREVIEW MODAL */}
-      {preview.open ? (
+      {preview.open && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 max-w-lg w-full mx-4 relative">
             <button
               onClick={() => setPreview({ open: false })}
-              className="absolute top-2 right-2 text-zinc-500 hover:text-zinc-900"
+              className="absolute top-2 right-2 text-zinc-500"
             >
               ✕
             </button>
             <h3 className="text-sm font-semibold mb-3">{preview.title}</h3>
-            {preview.image ? (
-              <img src={preview.image} alt={preview.title} className="w-full rounded-xl" />
-            ) : null}
+            <img src={preview.image} className="w-full rounded-xl" />
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
+
